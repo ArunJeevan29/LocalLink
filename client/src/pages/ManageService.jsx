@@ -1,35 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Briefcase, DollarSign, MapPin, AlignLeft, Save, Plus, Edit2, Trash2, ArrowLeft } from 'lucide-react';
 
 const ManageService = () => {
-  // 1. MOCK DATA: Simulating a user who already has two different skills listed
-  const [listings, setListings] = useState([
-    { id: 1, businessName: 'Arun Web Solutions', category: 'Web Development', price: 800, location: 'Erode, TN', bio: 'Expert React developer.' },
-    { id: 2, businessName: 'Arun PC Repair', category: 'PC Repair', price: 400, location: 'Erode, TN', bio: 'Fast and reliable computer troubleshooting.' }
-  ]);
-
-  // 2. STATE: Are we looking at the 'list' of services, or the 'form' to edit/create one?
-  const [view, setView] = useState('list'); 
+  const [listings, setListings] = useState([]);
+  const [view, setView] = useState('list');
   
-  // 3. STATE: Holds the data for the form we are currently typing in
-  const emptyForm = { businessName: '', category: 'Web Development', price: '', location: '', bio: '' };
+  const emptyForm = { title: '', category: 'Web Development', price: '', location: 'Erode, TN', description: '' };
   const [currentService, setCurrentService] = useState(emptyForm);
 
-  // --- HANDLERS ---
+  useEffect(() => {
+    const fetchMyServices = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:5000/api/services/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setListings(response.data);
+      } catch (error) {
+        console.error("Error fetching your services:", error);
+      }
+    };
+    fetchMyServices();
+  }, []);
   
   const handleAddNew = () => {
-    setCurrentService(emptyForm); // Clear the form
-    setView('form'); // Show the form
+    setCurrentService(emptyForm); 
+    setView('form'); 
   };
 
   const handleEdit = (service) => {
-    setCurrentService(service); // Load the existing data into the form
-    setView('form'); // Show the form
+    setCurrentService(service); 
+    setView('form'); 
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if(window.confirm("Are you sure you want to delete this listing?")) {
-      setListings(listings.filter(item => item.id !== id));
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`http://localhost:5000/api/services/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setListings(listings.filter(item => item._id !== id));
+      } catch (error) {
+        console.error("Error deleting service:", error);
+        alert("Failed to delete service.");
+      }
     }
   };
 
@@ -37,23 +54,35 @@ const ManageService = () => {
     setCurrentService({ ...currentService, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentService.id) {
-      // Updating an existing listing
-      setListings(listings.map(item => item.id === currentService.id ? currentService : item));
-    } else {
-      // Creating a brand new listing
-      const newListing = { ...currentService, id: Date.now() }; // Fake ID generation
-      setListings([...listings, newListing]);
+    try {
+      const token = localStorage.getItem("token");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      if (currentService._id) {
+        const response = await axios.put(
+          `http://localhost:5000/api/services/${currentService._id}`, 
+          currentService, 
+          config
+        );
+ 
+        setListings(listings.map(item => item._id === currentService._id ? response.data : item));
+        alert("Listing updated successfully!");
+      } else {
+
+        const response = await axios.post("http://localhost:5000/api/services", currentService, config);
+        setListings([...listings, response.data]);
+        alert("New listing created successfully!");
+      }
+      
+      setView('list'); 
+    } catch (error) {
+      console.error("Error saving service:", error.response?.data?.message || error.message);
+      alert(error.response?.data?.message || "Error saving your service. Check the console.");
     }
-    setView('list'); // Go back to the list view
-    alert("Listing saved successfully!");
   };
 
-  // --- RENDER VIEWS ---
-
-  // VIEW 1: The List of Services
   if (view === 'list') {
     return (
       <div className="p-8 max-w-5xl mx-auto">
@@ -78,21 +107,21 @@ const ManageService = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {listings.map(listing => (
-              <div key={listing.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+              <div key={listing._id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                   <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase">
                     {listing.category}
                   </span>
                   <span className="font-bold text-gray-900">₹{listing.price}/hr</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{listing.businessName}</h3>
-                <p className="text-sm text-gray-500 mb-4 flex-1 line-clamp-2">{listing.bio}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">{listing.title}</h3>
+                <p className="text-sm text-gray-500 mb-4 flex-1 line-clamp-2">{listing.description}</p>
                 
                 <div className="flex gap-2 pt-4 border-t border-gray-100 mt-auto">
                   <button onClick={() => handleEdit(listing)} className="flex-1 bg-gray-100 text-gray-700 font-medium py-2 rounded hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
                     <Edit2 size={16} /> Edit
                   </button>
-                  <button onClick={() => handleDelete(listing.id)} className="px-4 bg-red-50 text-red-600 font-medium py-2 rounded hover:bg-red-100 transition-colors flex items-center justify-center">
+                  <button onClick={() => handleDelete(listing._id)} className="px-4 bg-red-50 text-red-600 font-medium py-2 rounded hover:bg-red-100 transition-colors flex items-center justify-center">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -104,7 +133,6 @@ const ManageService = () => {
     );
   }
 
-  // VIEW 2: The Form (Create or Edit)
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8 border-b border-gray-200 pb-4 flex items-center gap-4">
@@ -113,7 +141,7 @@ const ManageService = () => {
         </button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            {currentService.id ? 'Edit Service' : 'Create New Service'}
+            {currentService._id ? 'Edit Service' : 'Create New Service'}
           </h1>
         </div>
       </div>
@@ -121,18 +149,16 @@ const ManageService = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Business Name */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Business / Display Name</label>
+              <label className="text-sm font-bold text-gray-700">Service Title</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Briefcase className="h-5 w-5 text-gray-400" />
                 </div>
-                <input type="text" name="businessName" value={currentService.businessName} onChange={handleChange} className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" required />
+                <input type="text" name="title" value={currentService.title} onChange={handleChange} className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" required />
               </div>
             </div>
 
-            {/* Category */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">Service Category</label>
               <select name="category" value={currentService.category} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 bg-white">
@@ -143,7 +169,6 @@ const ManageService = () => {
               </select>
             </div>
 
-            {/* Price */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">Hourly Rate (₹)</label>
               <div className="relative">
@@ -154,7 +179,6 @@ const ManageService = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">Location</label>
               <div className="relative">
@@ -166,18 +190,16 @@ const ManageService = () => {
             </div>
           </div>
 
-          {/* Bio */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">About This Service</label>
             <div className="relative">
               <div className="absolute top-3 left-3 pointer-events-none">
                 <AlignLeft className="h-5 w-5 text-gray-400" />
               </div>
-              <textarea name="bio" rows="4" value={currentService.bio} onChange={handleChange} className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 resize-none" required></textarea>
+              <textarea name="description" rows="4" value={currentService.description} onChange={handleChange} className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 resize-none" required></textarea>
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
             <button type="button" onClick={() => setView('list')} className="px-6 py-3 font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               Cancel

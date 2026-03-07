@@ -12,14 +12,19 @@ import {
   Database,
   LayoutDashboard,
 } from "lucide-react";
-import { Link } from "react-router-dom"; // 🌟 ADDED: This fixes the error!
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
 
-  // 🌟 FIXED: Now it dynamically reads the role from whoever is logged in!
   const currentRole = user?.role;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    if (logout) logout();
+    window.location.href = "/login";
+  };
 
   const userMenus = [
     { name: "Find Services", icon: Home, path: "/" },
@@ -28,7 +33,6 @@ const Sidebar = () => {
     { name: "Past Hires", icon: FolderOpen, path: "/dashboard/history" },
   ];
 
-  // 2. Menus ONLY for Providers (Selling Side)
   const providerMenus = [
     { name: "Incoming Requests", icon: Bell, path: "/dashboard/requests" },
     { name: "Active Client Jobs", icon: Wrench, path: "/dashboard/active" },
@@ -38,8 +42,8 @@ const Sidebar = () => {
 
   const adminMenus = [
     { name: "Platform Overview", icon: LayoutDashboard, path: "/admin" },
-    { name: "Manage Users", icon: Users, path: "/admin" },
-    { name: "Manage Listings", icon: Database, path: "/admin" },
+    { name: "Manage Users", icon: Users, path: "/admin/users" },
+    { name: "Manage Listings", icon: Database, path: "/admin/listing" },
   ];
 
   return (
@@ -108,7 +112,7 @@ const Sidebar = () => {
         </div>
 
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-900/50 text-red-400 transition-colors"
         >
           <span>Log Out</span>

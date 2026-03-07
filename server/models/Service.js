@@ -1,18 +1,18 @@
 const mongoose = require("mongoose");
 
-const jobSchema = new mongoose.Schema(
+const serviceSchema = new mongoose.Schema(
   {
-    client: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     provider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    serviceTitle: {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
       type: String,
       required: true,
     },
@@ -20,13 +20,16 @@ const jobSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    status: {
+    category: {
       type: String,
-      enum: ["Pending", "Accepted", "Declined", "Completed", "Cancelled"],
-      default: "Pending",
+      required: true,
+    },
+    location: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Job", jobSchema);
+module.exports = mongoose.model("Service", serviceSchema);

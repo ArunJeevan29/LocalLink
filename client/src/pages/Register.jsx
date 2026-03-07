@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Briefcase, Mail, Lock, UserPlus } from "lucide-react";
+import axios from "axios";
 
 const Register = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    conformPassword: "",
     role: "user",
   });
 
@@ -15,16 +18,32 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+
+    if (formData.password !== formData.conformPassword) {
+      alert("Password do not match");
       return;
     }
-    console.log("Sending to Backend:", formData);
-    alert(
-      `Successfully registered as a ${formData.role}! (Backend connection pending)`,
-    );
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        },
+      );
+
+      console.log("Saved to the Database", response.data);
+      navigate("/login");
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Server connection error";
+      alert(errorMessage);
+    }
   };
 
   return (
@@ -130,16 +149,15 @@ const Register = () => {
               </div>
               <input
                 type="password"
-                name="confirmPassword"
+                name="conformPassword"
                 required
                 className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-colors"
-                placeholder="Confirm Password"
+                placeholder="Conform Password"
                 onChange={handleChange}
               />
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
@@ -148,7 +166,6 @@ const Register = () => {
           </button>
         </form>
 
-        {/* Footer Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link

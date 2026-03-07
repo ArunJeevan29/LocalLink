@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, user } = useAuth(); 
+  const { login, user } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -21,9 +22,25 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login({ name: "Arun Jeevan", role: "provider" });
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+      );
+
+      localStorage.setItem("token", response.data.token);
+      login(response.data.user);
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Server connection error";
+      alert(errorMessage);
+    }
   };
 
   return (

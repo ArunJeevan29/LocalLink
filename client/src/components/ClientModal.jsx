@@ -2,16 +2,13 @@ import React from 'react';
 import { X, Star, Phone, MapPin, UserCheck } from 'lucide-react';
 
 const ClientModal = ({ client, onClose }) => {
-  if (!client) return null; // If no client is selected, don't show the popup
+  if (!client) return null; 
 
   return (
-    // The dark transparent background overlay
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       
-      {/* The White Modal Box */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
         
-        {/* Header Section */}
         <div className="bg-gray-50 p-6 border-b border-gray-100 flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{client.name}</h2>
@@ -24,9 +21,7 @@ const ClientModal = ({ client, onClose }) => {
           </button>
         </div>
 
-        {/* Body Section */}
         <div className="p-6">
-          {/* Quick Stats */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
               <div className="flex items-center justify-center gap-1 text-blue-700 font-bold text-xl mb-1">
@@ -42,7 +37,6 @@ const ClientModal = ({ client, onClose }) => {
             </div>
           </div>
 
-          {/* Contact Info (Only show if they want to call) */}
           <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
             <span className="text-gray-600 font-medium text-sm">Contact Number</span>
             <a href={`tel:${client.phone}`} className="flex items-center gap-2 text-blue-600 font-bold hover:underline">
@@ -50,7 +44,6 @@ const ClientModal = ({ client, onClose }) => {
             </a>
           </div>
 
-          {/* Reviews from other Pros */}
           <div>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-3 border-b border-gray-100 pb-2">
               Reviews from Professionals
